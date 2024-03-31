@@ -5,6 +5,7 @@ namespace app\modules\v1\controllers;
 use app\common\controllers\AccessController;
 use app\common\models\Project;
 use app\common\models\ProjectUser;
+use app\modules\v1\services\ProjectService;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\db\Exception;
@@ -15,6 +16,18 @@ use yii\web\UnauthorizedHttpException;
 
 class ProjectController extends AccessController
 {
+    private ProjectService $project_service;
+
+
+    /**
+     * @throws UnauthorizedHttpException
+     */
+    public function __construct($id, $module, $config = [])
+    {
+        $this->project_service = new ProjectService($this->getCurrentUserId());
+        parent::__construct($id, $module, $config);
+    }
+
     /**
      * @throws UnauthorizedHttpException
      */
@@ -43,66 +56,45 @@ class ProjectController extends AccessController
     }
 
     /**
-     * @throws UnauthorizedHttpException
      * @throws InvalidConfigException
      * @throws Exception
      * @throws BadRequestHttpException
      */
     public function actionCreate(): Response
     {
-        $user_id = $this->getCurrentUserId();
         $request = Yii::$app->request->getBodyParams();
 
         if (!isset($request['title'])) {
             throw new BadRequestHttpException('Missing title');
         }
 
-        $transaction = Yii::$app->db->beginTransaction();
-        try {
-            $model = new Project([
-                'title' => $request['title'],
-                'user_id' => $user_id
-            ]);
-
-            if (!$model->save()) {
-                throw new BadRequestHttpException('Unable to save project');
-            }
-
-            $relation_model = new ProjectUser([
-                'project_id' => $model->getId(),
-                'user_id' => $user_id
-            ]);
-
-            if (!$relation_model->save()) {
-                throw new BadRequestHttpException('Unable to save project');
-            }
-
-            $transaction->commit();
-        } catch (\Exception $exception) {
-            $transaction->rollBack();
-            throw $exception;
-        }
+        $model = $this->project_service->create($request['title']);
 
         return $this->formatResponse($model, 201);
     }
 
     public function actionUpdate($project_id)
     {
-        // TODO Implement update controller logic
+        // TODO Implement update action logic
     }
 
     public function actionDelete($project_id)
     {
-        // TODO Implement delete controller logic
+        // TODO Implement delete action logic
     }
 
-    public function actionAddMember($project_id, $user_id)
+    public function actionInvite($project_id)
     {
-        // TODO Implement add-member controller logic
+        // TODO Implement invite action logic
     }
 
-    public function actionDeleteMember($project_id, $user_id)
+    public function actionExclude($project_id)
     {
-        // TODO Implement delete-member controller logic
+        // TODO Implement exclude action logic
+    }
+
+    public function actionExit($project_id)
+    {
+        // TODO Implement exit controller logic
     }
 }

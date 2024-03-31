@@ -15,10 +15,10 @@ class m240330_101145_create_project_table extends Migration
         $this->createTable('{{%project}}', [
             'id' => $this->primaryKey(),
             'title' => $this->string(64)->notNull(),
-            'user_id' => $this->getDb()->getSchema()->createColumnSchemaBuilder('uuid')->notNull(),
+            'creator_id' => $this->getDb()->getSchema()->createColumnSchemaBuilder('uuid')->notNull(),
         ]);
 
-        $this->addForeignKey('user_id', '{{%project}}', 'user_id', '{{%user}}', 'id');
+        $this->addForeignKey('creator_id', '{{%project}}', 'creator_id', '{{%user}}', 'id');
     }
 
     /**

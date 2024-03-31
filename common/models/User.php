@@ -3,6 +3,7 @@
 namespace app\common\models;
 
 use kaabar\jwt\Jwt;
+use Lcobucci\JWT\Token;
 use Yii;
 use yii\base\Exception;
 use yii\db\ActiveRecord;
@@ -87,6 +88,10 @@ class User extends ActiveRecord implements IdentityInterface
         $jwt = Yii::$app->jwt;
 
         $token_model = $jwt->loadToken($token);
+
+        if (!$token_model instanceof Token) {
+            return null;
+        }
 
         return static::find()
             ->where(['id' => $token_model->claims()->get("id")])
