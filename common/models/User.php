@@ -6,6 +6,8 @@ use kaabar\jwt\Jwt;
 use Lcobucci\JWT\Token;
 use Yii;
 use yii\base\Exception;
+use yii\base\InvalidConfigException;
+use yii\db\ActiveQuery;
 use yii\db\ActiveRecord;
 use yii\web\IdentityInterface;
 
@@ -16,6 +18,7 @@ use yii\web\IdentityInterface;
  * @property string $email
  * @property string $role
  * @property string $password
+ * @property array $projects
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -133,9 +136,12 @@ class User extends ActiveRecord implements IdentityInterface
         $this->password = \Yii::$app->getSecurity()->generatePasswordHash($password);
     }
 
-    public function getProjects(): array
+    /**
+     * @throws InvalidConfigException
+     */
+    public function getProjects(): ActiveQuery
     {
         return $this->hasMany(Project::class, ['id' => 'project_id'])
-            ->via('project_user')->all();
+            ->viaTable('project_user', ['user_id' => 'id']);
     }
 }

@@ -21,8 +21,7 @@ class AuthController extends BaseController
             if (!array_key_exists($key, $request)) {
                 throw new BadRequestHttpException('Missing required parameter - ' . $key);
             }
-            if (strlen($request['password']) < 6)
-            {
+            if (strlen($request['password']) < 6) {
                 throw new BadRequestHttpException('Password must contain min 6 symbols');
             }
         }

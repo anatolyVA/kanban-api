@@ -38,7 +38,7 @@ class TokenService implements TokenServiceInterface
             // Configures the audience (aud claim)
             ->permittedFor($jwtParams['audience'])
             // Configures the id (jti claim)
-            ->identifiedBy($jwtParams['id'], true)
+            ->identifiedBy($jwtParams['id'])
             // Configures the time that the token was issue (iat claim)
             ->issuedAt($now)
             // Configures the time that the token can be used (nbf claim)
@@ -60,7 +60,7 @@ class TokenService implements TokenServiceInterface
         $accessTokenExpires = $now->modify('+30 minute');
 
         return [
-            'refresh_token' => self::generateJwt($payload, $refreshTokenExpires), // TODO Create random 200-symb string
+            'refresh_token' => self::generateJwt($payload, $refreshTokenExpires), 
             'access_token' => self::generateJwt($payload, $accessTokenExpires),
         ];
     }

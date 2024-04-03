@@ -11,10 +11,13 @@ use yii\helpers\ArrayHelper;
  * @property string $id
  * @property string $title
  * @property string $creator_id
+ * @property int $membersCount
  * @property array $members
  */
 class Project extends ActiveRecord
 {
+    public int $membersCount;
+
     public static function tableName(): string
     {
         return "{{%project}}";
@@ -48,25 +51,30 @@ class Project extends ActiveRecord
         ]);
     }
 
-    public static function findByUserId(string $user_id): ?array
+    public static function findByUserId(string $user_id): array
     {
-        // TODO Implement method
-        return [];
+        $user = User::findIdentity($user_id);
+        return ArrayHelper::toArray($user->projects, [
+            self::class => [
+                'id',
+                'title',
+                'creator_id',
+                'members',
+            ],
+        ]);
     }
 
-    public static function findById($project_id): ?array
+    public static function findById($project_id): ?Project
     {
-        $project =  self::findOne(['id' => $project_id]);
+        $project = self::findOne($project_id);
 
-        if ($project == null) return null;
+        if ($project == null) {
+            return null;
+        }
 
-        return [
-            'id' => $project->id,
-            'title' => $project->title,
-            'creator_id' => $project->creator_id,
-            'members' => $project->members
-        ];
+        return $project;
     }
+
 
     public function getId(): string
     {
@@ -80,5 +88,13 @@ class Project extends ActiveRecord
     {
         return $this->hasMany(User::class, ['id' => 'user_id'])
             ->viaTable('project_user', ['project_id' => 'id']);
+    }
+
+    /**
+     * @throws InvalidConfigException
+     */
+    public function isMember(string $user_id): bool
+    {
+        return boolval($this->getMembers()->where(['id' => $user_id])->one());
     }
 }
