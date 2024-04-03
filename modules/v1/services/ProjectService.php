@@ -57,6 +57,7 @@ class ProjectService implements ProjectServiceInterface
 
     public function delete(int $project_id)
     {
+        $transaction = Yii::$app->db->beginTransaction();
         // TODO: Implement delete() method.
     }
 

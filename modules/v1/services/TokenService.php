@@ -9,8 +9,10 @@ use DateTime;
 use DateTimeImmutable;
 use kaabar\jwt\Jwt;
 use Lcobucci\JWT\Token;
+use Throwable;
 use Yii;
 use yii\db\Query;
+use yii\db\StaleObjectException;
 
 class TokenService implements TokenServiceInterface
 {
@@ -58,7 +60,7 @@ class TokenService implements TokenServiceInterface
         $accessTokenExpires = $now->modify('+30 minute');
 
         return [
-            'refresh_token' => self::generateJwt($payload, $refreshTokenExpires),
+            'refresh_token' => self::generateJwt($payload, $refreshTokenExpires), // TODO Create random 200-symb string
             'access_token' => self::generateJwt($payload, $accessTokenExpires),
         ];
     }
@@ -73,6 +75,10 @@ class TokenService implements TokenServiceInterface
         return $this->jwt->validateToken($token_model);
     }
 
+    /**
+     * @throws Throwable
+     * @throws StaleObjectException
+     */
     public function deleteRefreshToken(string $token): bool|int
     {
         $model = UserToken::findOne(['refresh_token' => $token]);
@@ -115,7 +121,7 @@ class TokenService implements TokenServiceInterface
         $current_date = new DateTime();
         $expired_tokens = (new Query())
             ->from('user_token')
-            ->where(['<', 'expirationDate', $current_date->format('Y-m-d H:i:s')])
+            ->where(['<', 'expiration_date', $current_date->format('Y-m-d H:i:s')])
             ->all();
 
         if (!empty($expired_tokens)) {

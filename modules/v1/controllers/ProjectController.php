@@ -46,7 +46,7 @@ class ProjectController extends AccessController
     public function actionView($project_id): Response
     {
         $user_id = $this->getCurrentUserId();
-        $project = Project::findByCreatorIdAndProjectId($project_id, $user_id);
+        $project = Project::findById($project_id);
 
         if (!$project) {
             throw new NotFoundHttpException('Project not found');

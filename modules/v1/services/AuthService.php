@@ -3,6 +3,7 @@
 namespace app\modules\v1\services;
 
 use app\common\interfaces\AuthServiceInterface;
+use app\common\models\Role;
 use app\common\models\User;
 use app\common\models\UserToken;
 use Ramsey\Uuid\Uuid;
@@ -36,6 +37,11 @@ class AuthService implements AuthServiceInterface
 
         $uuid4 = Uuid::uuid4();
 
+        if (Role::findIdentity($data['role']) == null)
+        {
+            throw new BadRequestHttpException('No such role found');
+        }
+
         $model = new User([
             'id' => $uuid4->toString(),
             'email' => $data['email'],
@@ -48,7 +54,9 @@ class AuthService implements AuthServiceInterface
         $transaction = Yii::$app->db->beginTransaction();
         try {
             if (!$model->save()) {
-                throw new BadRequestHttpException("Unable to save user");
+                foreach ($model->errors as $error) {
+                    throw new BadRequestHttpException($error[0]);
+                }
             }
 
             $tokens = $this->token_service->generateTokens($model);

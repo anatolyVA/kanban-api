@@ -19,7 +19,11 @@ class AuthController extends BaseController
         $requiredKeys = ['first_name', 'last_name', 'password', 'email', 'role'];
         foreach ($requiredKeys as $key) {
             if (!array_key_exists($key, $request)) {
-                throw new BadRequestHttpException('Missing required parameters');
+                throw new BadRequestHttpException('Missing required parameter - ' . $key);
+            }
+            if (strlen($request['password']) < 6)
+            {
+                throw new BadRequestHttpException('Password must contain min 6 symbols');
             }
         }
     }
