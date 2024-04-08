@@ -4,10 +4,11 @@ namespace app\common\models;
 
 use yii\db\ActiveRecord;
 
-class Status extends ActiveRecord
+class WorkspaceUser extends ActiveRecord
 {
     public static function tableName(): string
     {
-        return "{{%status}}";
+        return '{{%workspace_user}}';
     }
+
 }

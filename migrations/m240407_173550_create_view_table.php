@@ -4,9 +4,9 @@ use yii\base\NotSupportedException;
 use yii\db\Migration;
 
 /**
- * Handles the creation of table `{{%user}}`.
+ * Handles the creation of table `{{%view}}`.
  */
-class m240318_171951_create_user_table extends Migration
+class m240407_173550_create_view_table extends Migration
 {
     /**
      * {@inheritdoc}
@@ -14,18 +14,17 @@ class m240318_171951_create_user_table extends Migration
      */
     public function safeUp(): void
     {
-        $this->createTable('{{%user}}', [
+        $this->createTable('{{%view}}', [
             'id' => $this->getDb()
                 ->getSchema()
                 ->createColumnSchemaBuilder('uuid')
                 ->defaultExpression(new yii\db\Expression('gen_random_uuid()')),
-            'first_name' => $this->string(52)->notNull(),
-            'last_name' => $this->string(52)->notNull(),
-            'email' => $this->string(64)->unique()->notNull(),
-            'password' => $this->string()->notNull(),
+            'title' => $this->string(32)->notNull(),
+            'project_id' => $this->getDb()->getSchema()->createColumnSchemaBuilder('uuid')->notNull()
         ]);
 
-        $this->addPrimaryKey('user_id', '{{%user}}', 'id');
+        $this->addPrimaryKey('view_id', '{{%view}}', 'id');
+        $this->addForeignKey('project_id', '{{%view}}', 'project_id', '{{%project}}', 'id');
     }
 
     /**
@@ -33,8 +32,6 @@ class m240318_171951_create_user_table extends Migration
      */
     public function safeDown(): void
     {
-        $this->dropTable('{{%user}}');
+        $this->dropTable('{{%view}}');
     }
 }
-
-

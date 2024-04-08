@@ -2,11 +2,12 @@
 
 namespace app\modules\v1\services;
 
-use app\common\interfaces\ProjectServiceInterface;
-use app\common\models\Project;
-use app\common\models\ProjectUser;
+use app\common\interfaces\WorkspaceServiceInterface;
+use app\common\models\Workspace;
+use app\common\models\WorkspaceUser;
 use app\common\models\User;
 use Ramsey\Uuid\Uuid;
+use Throwable;
 use Yii;
 use yii\base\InvalidConfigException;
 use yii\db\Exception;
@@ -16,39 +17,35 @@ use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
 
-class ProjectService implements ProjectServiceInterface
+class WorkspaceService implements WorkspaceServiceInterface
 {
-    private string $current_user_id;
-
-    public function __construct(string $user_id)
-    {
-        $this->current_user_id = $user_id;
-    }
 
     /**
      * @throws Exception
      * @throws BadRequestHttpException
      */
-    public function create(string $title): Project
+    public function create(string $title, string $current_user_id): Workspace
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            $model = new Project([
+            $model = new Workspace([
                 'title' => $title,
-                'creator_id' => $this->current_user_id
+                'creator_id' => $current_user_id
             ]);
 
             if (!$model->save()) {
-                throw new BadRequestHttpException('Unable to save project');
+                foreach ($model->getErrors() as $error) {
+                    throw new BadRequestHttpException($error[0]);
+                }
             }
 
-            $relation_model = new ProjectUser([
-                'project_id' => $model->getId(),
-                'user_id' => $this->current_user_id
+            $relation_model = new WorkspaceUser([
+                'workspace_id' => $model->getId(),
+                'user_id' => $current_user_id
             ]);
 
             if (!$relation_model->save()) {
-                throw new BadRequestHttpException('Unable to save project');
+                throw new BadRequestHttpException('Unable to save Workspace');
             }
 
             $transaction->commit();
@@ -61,29 +58,29 @@ class ProjectService implements ProjectServiceInterface
 
     /**
      * @throws Exception
-     * @throws \Throwable
+     * @throws Throwable
      * @throws StaleObjectException
      * @throws ForbiddenHttpException
      * @throws NotFoundHttpException
      */
-    public function delete(int $project_id): void
+    public function delete(string $id, string $current_user_id): void
     {
-        $model = Project::findById($project_id);
-        if (!$model) {
-            throw new NotFoundHttpException('Project not found');
+        $model = Workspace::findById($id);
+        if (is_null($model)) {
+            throw new NotFoundHttpException('Workspace not found');
         }
-        if ($model->creator_id != $this->current_user_id) {
-            throw new ForbiddenHttpException('Forbidden for you');
+        if ($model->creator_id != $current_user_id) {
+            throw new ForbiddenHttpException('You do not have permission to delete this workspace');
         }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
             Yii::$app->db->createCommand()
-                ->delete('project_user', ['project_id' => $project_id])
+                ->delete('workspace_user', ['workspace_id' => $id])
                 ->execute();
 
             if (!$model->delete()) {
-                throw new ServerErrorHttpException('Failed to delete the project.');
+                throw new ServerErrorHttpException('Unable to delete Workspace');
             }
 
             $transaction->commit();
@@ -98,13 +95,13 @@ class ProjectService implements ProjectServiceInterface
      * @throws ForbiddenHttpException
      * @throws BadRequestHttpException
      */
-    public function rename(int $project_id, string $title): Project
+    public function rename(string $workspace_id, string $current_user_id, string $title): Workspace
     {
-        $model = Project::findById($project_id);
-        if (!$model) {
-            throw new NotFoundHttpException('Project not found');
+        $model = Workspace::findById($workspace_id);
+        if (is_null($model)) {
+            throw new NotFoundHttpException('Workspace not found');
         }
-        if ($model->creator_id != $this->current_user_id) {
+        if ($model->creator_id !== $current_user_id) {
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
@@ -123,13 +120,13 @@ class ProjectService implements ProjectServiceInterface
      * @throws ForbiddenHttpException
      * @throws BadRequestHttpException
      */
-    public function invite(int $project_id, array $user_ids): void
+    public function invite(string $workspace_id, string $current_user_id, array $user_ids): void
     {
-        $model = Project::findById($project_id);
-        if (!$model) {
-            throw new NotFoundHttpException('Project not found');
+        $model = Workspace::findById($workspace_id);
+        if (is_null($model)) {
+            throw new NotFoundHttpException('Workspace not found');
         }
-        if ($model->creator_id != $this->current_user_id) {
+        if ($model->creator_id !== $current_user_id) {
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
@@ -138,7 +135,7 @@ class ProjectService implements ProjectServiceInterface
                 throw new BadRequestHttpException('Invalid uuid');
             }
             $user = User::findOne($uid);
-            if (!$user) {
+            if (is_null($user)) {
                 throw new NotFoundHttpException('User not found');
             }
             if (!$model->isMember($uid)) {
@@ -155,18 +152,18 @@ class ProjectService implements ProjectServiceInterface
      * @throws ForbiddenHttpException
      * @throws BadRequestHttpException
      */
-    public function exclude(int $project_id, array $user_ids): void
+    public function exclude(string $workspace_id, string $current_user_id, array $user_ids): void
     {
-        $model = Project::findById($project_id);
-        if (!$model) {
-            throw new NotFoundHttpException('Project not found');
+        $model = Workspace::findById($workspace_id);
+        if (is_null($model)) {
+            throw new NotFoundHttpException('Workspace not found');
         }
 
-        if ($model->creator_id != $this->current_user_id) {
+        if ($model->creator_id !== $current_user_id) {
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
-        if (array_key_exists($this->current_user_id, $user_ids)) {
+        if (in_array($current_user_id, $user_ids)) {
             throw new BadRequestHttpException("You can't exclude yourself");
         }
 
@@ -174,8 +171,12 @@ class ProjectService implements ProjectServiceInterface
             if (!Uuid::isValid($uid)) {
                 throw new BadRequestHttpException('Invalid uuid');
             }
+            $user = User::findOne($uid);
+            if (is_null($user)) {
+                throw new NotFoundHttpException('User not found');
+            }
             if ($model->isMember($uid)) {
-                $model->unlink('members', User::findOne($uid), true);
+                $model->unlink('members', $user);
             }
         }
     }
@@ -187,23 +188,23 @@ class ProjectService implements ProjectServiceInterface
      * @throws NotFoundHttpException
      * @throws BadRequestHttpException
      */
-    public function exit(int $project_id): void
+    public function exit(string $workspace_id, string $current_user_id): void
     {
-        $model = Project::findById($project_id);
+        $model = Workspace::findById($workspace_id);
         if (!$model) {
-            throw new NotFoundHttpException('Project not found');
+            throw new NotFoundHttpException('Workspace not found');
         }
 
-        $current_user = User::findOne($this->current_user_id);
+        $current_user = User::findOne($current_user_id);
         if (!$current_user) {
             throw new NotFoundHttpException('User not found');
         }
 
-        if ($this->current_user_id == $model->creator_id) {
-            throw new BadRequestHttpException("You can't exit of your project");
+        if ($current_user_id === $model->creator_id) {
+            throw new BadRequestHttpException("You can't exit of your workspace");
         }
 
-        if ($model->isMember($this->current_user_id)) {
+        if ($model->isMember($current_user_id)) {
             $model->unlink('members', $current_user, true);
         }
     }

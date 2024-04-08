@@ -38,7 +38,7 @@ $config = [
                 if ($response->data !== null) {
                     $response->data = [
                         'success' => $response->isSuccessful,
-                        'message' => $response->data,
+                        'body' => $response->data,
                         'status' => $response->statusCode
                     ];
                 }
@@ -76,16 +76,16 @@ $config = [
             //'enableStrictParsing' => true,
             'showScriptName' => false,
             'rules' => [
-                'v1/users' => 'v1/user/index',
-                'v1/users/<id:[\w-]+>' => 'v1/user/view',
-                'GET v1/projects' => 'v1/project/index',
-                'GET v1/projects/<project_id:\d+>' => 'v1/project/view',
-                'POST v1/projects' => 'v1/project/create',
-                'PUT,PATCH v1/projects/<project_id:\d+>' => 'v1/project/update',
-                'DELETE v1/projects/<project_id:\d+>' => 'v1/project/delete',
-                'POST v1/projects/<project_id:\d+>/invite' => 'v1/project/invite',
-                'POST v1/projects/<project_id:\d+>/exclude' => 'v1/project/exclude',
-                'POST v1/projects/<project_id:\d+>/exit' => 'v1/project/exit',
+                'GET,OPTIONS v1/users' => 'v1/user/index',
+                'GET,OPTIONS v1/users/<id:[\w-]+>' => 'v1/user/view',
+                'GET,OPTIONS v1/workspaces' => 'v1/workspace/index',
+                'GET,OPTIONS v1/workspaces/<id:[\w-]+>' => 'v1/workspace/view',
+                'POST v1/workspaces' => 'v1/workspace/create',
+                'PUT,PATCH v1/workspaces/<id:[\w-]+>' => 'v1/workspace/update',
+                'DELETE v1/workspaces/<id:[\w-]+>' => 'v1/workspace/delete',
+                'POST v1/workspaces/<id:[\w-]+>/invite' => 'v1/workspace/invite',
+                'POST v1/workspaces/<id:[\w-]+>/exclude' => 'v1/workspace/exclude',
+                'POST v1/workspaces/<id:[\w-]+>/exit' => 'v1/workspace/exit',
             ],
         ],
     ],

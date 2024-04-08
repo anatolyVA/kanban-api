@@ -18,7 +18,7 @@ use yii\web\IdentityInterface;
  * @property string $email
  * @property string $role
  * @property string $password
- * @property array $projects
+ * @property array $workspaces
  */
 class User extends ActiveRecord implements IdentityInterface
 {
@@ -39,7 +39,7 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            [['first_name', 'password', 'last_name', 'email', 'role'], 'required'],
+            [['first_name', 'password', 'last_name', 'email'], 'required'],
             [['first_name', 'last_name'], 'string', 'min' => 2, 'max' => 52],
             ['email', 'email'],
             ['password', 'string', 'min' => 6, 'max' => 255]
@@ -55,7 +55,7 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_LOGIN] = ['email', 'password'];
-        $scenarios[self::SCENARIO_REGISTER] = ['first_name', 'last_name', 'role', 'email', 'password'];
+        $scenarios[self::SCENARIO_REGISTER] = ['first_name', 'last_name', 'email', 'password'];
         return $scenarios;
     }
 
@@ -139,9 +139,9 @@ class User extends ActiveRecord implements IdentityInterface
     /**
      * @throws InvalidConfigException
      */
-    public function getProjects(): ActiveQuery
+    public function getWorkspaces(): ActiveQuery
     {
-        return $this->hasMany(Project::class, ['id' => 'project_id'])
-            ->viaTable('project_user', ['user_id' => 'id']);
+        return $this->hasMany(Workspace::class, ['id' => 'workspace_id'])
+            ->viaTable('workspace_user', ['user_id' => 'id']);
     }
 }

@@ -11,7 +11,7 @@ class Role extends ActiveRecord
         return "{{%role}}";
     }
 
-    public static function findIdentity($title): Role|null
+    public static function findIdentity($title): ?Role
     {
         return self::findOne($title);
     }

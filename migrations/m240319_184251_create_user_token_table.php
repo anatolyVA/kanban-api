@@ -1,5 +1,6 @@
 <?php
 
+use yii\base\NotSupportedException;
 use yii\db\Migration;
 
 /**
@@ -9,11 +10,15 @@ class m240319_184251_create_user_token_table extends Migration
 {
     /**
      * {@inheritdoc}
+     * @throws NotSupportedException
      */
-    public function safeUp()
+    public function safeUp(): void
     {
         $this->createTable('{{%user_token}}', [
-            'user_id' => $this->getDb()->getSchema()->createColumnSchemaBuilder('uuid')->notNull(),
+            'user_id' => $this->getDb()
+                ->getSchema()
+                ->createColumnSchemaBuilder('uuid')
+                ->notNull(),
             'refresh_token' => $this->string(510)->notNull()->unique(),
             'user_ip' => $this->string(50)->notNull(),
             'expiration_date' => $this->dateTime()->notNull()

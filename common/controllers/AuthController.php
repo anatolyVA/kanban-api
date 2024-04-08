@@ -16,7 +16,7 @@ class AuthController extends BaseController
      */
     protected function validateRegisterRequest($request): void
     {
-        $requiredKeys = ['first_name', 'last_name', 'password', 'email', 'role'];
+        $requiredKeys = ['first_name', 'last_name', 'password', 'email'];
         foreach ($requiredKeys as $key) {
             if (!array_key_exists($key, $request)) {
                 throw new BadRequestHttpException('Missing required parameter - ' . $key);

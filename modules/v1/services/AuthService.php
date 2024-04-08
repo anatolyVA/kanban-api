@@ -35,19 +35,10 @@ class AuthService implements AuthServiceInterface
             throw new ConflictHttpException('Email is already taken');
         }
 
-        $uuid4 = Uuid::uuid4();
-
-        if (Role::findIdentity($data['role']) == null)
-        {
-            throw new BadRequestHttpException('No such role found');
-        }
-
         $model = new User([
-            'id' => $uuid4->toString(),
             'email' => $data['email'],
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],
-            'role' => $data['role'],
         ]);
         $model->hashPassword($data['password']);
 

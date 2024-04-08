@@ -11,7 +11,7 @@ class BaseController extends Controller
 {
     /** Get formatted response
      * @param $data
-     * @param int $status Response status code, like 200, 404
+     * @param int $status Response status code
      * @return Response
      */
     protected function formatResponse($data, int $status = 200): Response
@@ -26,6 +26,7 @@ class BaseController extends Controller
     public function behaviors(): array
     {
         $behaviors = parent::behaviors();
+
         $behaviors['rateLimit'] = [
             'class' => RateLimitFilter::class,
         ];

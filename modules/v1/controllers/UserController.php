@@ -27,8 +27,8 @@ class UserController extends AccessController
         $behaviors['verbs'] = [
             'class' => VerbFilter::class,
             'actions' => [
-                'index' => ['get'],
-                'view' => ['get']
+                'index' => ['get', 'options'],
+                'view' => ['get', 'options'],
             ],
         ];
         return $behaviors;

@@ -5,11 +5,7 @@ namespace app\common\models;
 use yii\db\ActiveRecord;
 
 /**
- * @property int $id
- * @property int $project_id
- * @property string $title
- * @property string $status
- * @property string $performer_id
+ * @property string $id
  * */
 class Task extends ActiveRecord
 {
@@ -17,4 +13,5 @@ class Task extends ActiveRecord
     {
         return '{{%task}}';
     }
+
 }
