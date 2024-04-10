@@ -223,12 +223,12 @@ class WorkspaceService implements WorkspaceServiceInterface
 
     /**
      * @param string $id
-     * @return Workspace|null
+     * @return array
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
      * @throws UnauthorizedHttpException
      */
-    public function getOne(string $id): ?Workspace
+    public function getOne(string $id): array
     {
         $model = Workspace::findById($id);
         if (!$model) {
@@ -237,7 +237,13 @@ class WorkspaceService implements WorkspaceServiceInterface
         if (!$model->isMember(Yii::$app->user->getId())) {
             throw new UnauthorizedHttpException("You don't have access to this workspace");
         }
-        return $model;
+        return [
+            'id' => $model->id,
+            'title' => $model->title,
+            'creator_id' => $model->creator_id,
+            'members' => $model->getMembers()->all(),
+            'projects' => $model->getProjects()->all()
+        ];
     }
 
     /**
@@ -246,5 +252,18 @@ class WorkspaceService implements WorkspaceServiceInterface
     public function getAll(): array
     {
         return Workspace::findByUserId(Yii::$app->user->getId());
+    }
+
+    /**
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     */
+    public function getMembers(string $id): array
+    {
+        $model = Workspace::findById($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Workspace not found');
+        }
+        return $model->getMembers()->all();
     }
 }

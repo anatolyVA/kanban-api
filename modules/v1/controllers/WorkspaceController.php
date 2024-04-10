@@ -33,6 +33,7 @@ class WorkspaceController extends AccessController
                 'update' => ['put', 'patch', 'options'],
                 'delete' => ['delete', 'options'],
                 'invite' => ['post', 'options'],
+                'get-members' => ['get', 'options'],
                 'exclude' => ['post', 'options'],
                 'exit' => ['post', 'options'],
             ]
@@ -45,14 +46,12 @@ class WorkspaceController extends AccessController
 
     public function __construct($id, $module, $config = [])
     {
-        $this->project_service = new WorkspaceService(); // Sorry me, God... = new WorkspaceService($this->getCurrentUserId())
+        $this->project_service = new WorkspaceService();
         parent::__construct($id, $module, $config);
     }
 
     /**
      * @return Response returns an array of projects the user is a member of
-     * @throws BadRequestHttpException
-     * @throws UnauthorizedHttpException
      */
     public function actionIndex(): Response
     {
@@ -76,14 +75,7 @@ class WorkspaceController extends AccessController
 
         $project = $this->project_service->getOne($id);
 
-        $result = [
-            'id' => $project->id,
-            'title' => $project->title,
-            'creator_id' => $project->creator_id,
-            'members' => $project->members
-        ];
-
-        return $this->formatResponse($result);
+        return $this->formatResponse($project);
     }
 
     /**
@@ -91,7 +83,6 @@ class WorkspaceController extends AccessController
      * @throws BadRequestHttpException
      * @throws Exception
      * @throws InvalidConfigException
-     * @throws UnauthorizedHttpException
      */
     public function actionCreate(): Response
     {
@@ -113,7 +104,6 @@ class WorkspaceController extends AccessController
      * @throws ForbiddenHttpException
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
-     * @throws UnauthorizedHttpException
      */
     public function actionUpdate($id): Response
     {
@@ -160,7 +150,6 @@ class WorkspaceController extends AccessController
      * @throws ForbiddenHttpException
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
-     * @throws UnauthorizedHttpException
      */
     public function actionInvite($id): Response
     {
@@ -188,7 +177,6 @@ class WorkspaceController extends AccessController
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
      * @throws StaleObjectException
-     * @throws UnauthorizedHttpException
      */
     public function actionExclude($id): Response
     {
@@ -208,10 +196,13 @@ class WorkspaceController extends AccessController
     }
 
     /**
+     * @param $id
+     * @return Response
+     * @throws BadRequestHttpException
      * @throws Exception
      * @throws InvalidConfigException
+     * @throws NotFoundHttpException
      * @throws StaleObjectException
-     * @throws NotFoundHttpException|BadRequestHttpException|UnauthorizedHttpException
      */
     public function actionExit($id): Response
     {
@@ -224,5 +215,21 @@ class WorkspaceController extends AccessController
         return $this->formatResponse('The exit was successful');
     }
 
+    /**
+     * @param $id
+     * @return Response
+     * @throws BadRequestHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     */
+    public function actionGetMembers($id): Response
+    {
+        if (!Uuid::isValid($id)) {
+            throw new BadRequestHttpException('Invalid uuid');
+        }
 
+        $users = $this->project_service->getMembers($id);
+
+        return $this->formatResponse($users);
+    }
 }

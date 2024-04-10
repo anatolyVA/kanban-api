@@ -45,6 +45,7 @@ class Workspace extends ActiveRecord
                 'title',
                 'creator_id',
                 'members',
+                'projects'
             ],
         ]);
     }
@@ -58,6 +59,7 @@ class Workspace extends ActiveRecord
                 'title',
                 'creator_id',
                 'members',
+                'projects'
             ],
         ]);
     }
@@ -80,6 +82,10 @@ class Workspace extends ActiveRecord
     {
         return $this->hasMany(User::class, ['id' => 'user_id'])
             ->viaTable('workspace_user', ['workspace_id' => 'id']);
+    }
+    public function getProjects(): ActiveQuery
+    {
+        return $this->hasMany(Project::class, ['workspace_id' => 'id']);
     }
 
     /**

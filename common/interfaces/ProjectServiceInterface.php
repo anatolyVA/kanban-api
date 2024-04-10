@@ -4,8 +4,10 @@ namespace app\common\interfaces;
 
 interface ProjectServiceInterface
 {
-    public function create(string $title, string $current_user_id);
-    public function delete(string $id, string $current_user_id);
-    public function rename(string $project_id, string $current_user_id, string $title);
+    public function create(string $title, string $workspace_id);
+    public function delete(string $id);
+    public function rename(string $id, string $title);
+    public function getOne(string $id);
+    public function getAll(string $workspace_id);
 
 }

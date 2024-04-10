@@ -3,12 +3,12 @@
 namespace app\modules\v1\services;
 
 use app\common\interfaces\AuthServiceInterface;
-use app\common\models\Role;
 use app\common\models\User;
 use app\common\models\UserToken;
-use Ramsey\Uuid\Uuid;
+use Throwable;
 use Yii;
 use yii\base\Exception;
+use yii\db\StaleObjectException;
 use yii\web\BadRequestHttpException;
 use yii\web\ConflictHttpException;
 use yii\web\Cookie;
@@ -25,9 +25,12 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @throws ConflictHttpException
+     * @param $data
+     * @return string
      * @throws BadRequestHttpException
+     * @throws ConflictHttpException
      * @throws Exception
+     * @throws \yii\db\Exception
      */
     public function register($data): string
     {
@@ -72,9 +75,13 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @throws NotFoundHttpException
+     * @param string $email
+     * @param string $password
+     * @return string
      * @throws ConflictHttpException
      * @throws Exception
+     * @throws NotFoundHttpException
+     * @throws \yii\db\Exception
      */
     public function login(string $email, string $password): string
     {
@@ -121,8 +128,12 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
-     * @throws UnauthorizedHttpException
+     * @param string $refresh_token
+     * @return string
      * @throws BadRequestHttpException
+     * @throws UnauthorizedHttpException
+     * @throws Throwable
+     * @throws StaleObjectException
      */
     public function logout(string $refresh_token): string
     {
@@ -143,11 +154,13 @@ class AuthService implements AuthServiceInterface
     }
 
     /**
+     * @param string $refresh_token
+     * @return string
+     * @throws BadRequestHttpException
      * @throws ConflictHttpException
-     * @throws \yii\db\Exception
      * @throws Exception
      * @throws UnauthorizedHttpException
-     * @throws BadRequestHttpException
+     * @throws \yii\db\Exception
      */
     public function refresh(string $refresh_token): string
     {
@@ -157,7 +170,7 @@ class AuthService implements AuthServiceInterface
 
         if (!$this->token_service->validateToken($refresh_token)) {
             throw new BadRequestHttpException('Invalid refresh token');
-        };
+        }
 
         $transaction = Yii::$app->db->beginTransaction();
         try {

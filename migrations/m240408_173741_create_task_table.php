@@ -20,7 +20,7 @@ class m240408_173741_create_task_table extends Migration
                 ->createColumnSchemaBuilder('uuid')
                 ->defaultExpression(new yii\db\Expression('gen_random_uuid()')),
             'title' => $this->string(32)->notNull(),
-            'description' => $this->string(510)->notNull(),
+            'description' => $this->string(510),
             'deadline' => $this->dateTime(),
             'priority' => $this->smallInteger(2),
             'is_completed' => $this->boolean()->defaultValue(false),

@@ -4,12 +4,12 @@ namespace app\common\interfaces;
 
 interface TaskServiceInterface
 {
-    public function create(string $title, string $status, int $project_id);
+    public function getAll(string $collection_id);
+    public function getOne(string $id);
+    public function create($data, string $collection_id);
 
-    public function rename(int $id, string $title);
+    public function update(string $id, $data);
 
-    public function delete(int $id);
-
-    public function changeStatus(int $id, string $status);
+    public function delete(string $id);
 
 }
