@@ -40,35 +40,4 @@ class AccessController extends BaseController
 
         return $behaviors;
     }
-
-    /**
-     * @throws UnauthorizedHttpException
-     * @throws NotFoundHttpException
-     * @throws BadRequestHttpException
-     */
-    protected function getCurrentUserId(): string
-    {
-        $authorizationHeader = Yii::$app->request->headers->get('Authorization');
-        if (!$authorizationHeader) {
-            throw new BadRequestHttpException('Missing authorization header');
-        }
-
-        /** @var Jwt $jwt */
-        $jwt = Yii::$app->jwt;
-
-        $tokenParts = explode(' ', $authorizationHeader);
-        if (count($tokenParts) !== 2 || !isset($tokenParts[1])) {
-            throw new BadRequestHttpException("Invalid authorization header format");
-        }
-
-        $tokenString = $tokenParts[1];
-
-        $token = $jwt->loadToken($tokenString);
-
-        if (!$token instanceof Token) {
-            throw new UnauthorizedHttpException("Invalid access token");
-        }
-
-        return $token->claims()->get("id");
-    }
 }

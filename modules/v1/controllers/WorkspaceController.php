@@ -51,21 +51,22 @@ class WorkspaceController extends AccessController
 
     /**
      * @return Response returns an array of projects the user is a member of
-     * @throws UnauthorizedHttpException|NotFoundHttpException
      * @throws BadRequestHttpException
+     * @throws UnauthorizedHttpException
      */
     public function actionIndex(): Response
     {
-        $user_id = $this->getCurrentUserId();
-        $projects = Workspace::findByUserId($user_id);
-
+        $projects = $this->project_service->getAll();
         return $this->formatResponse($projects);
     }
 
     /**
-     * @return Response returns information about a specific project
-     * @throws NotFoundHttpException
+     * @param $id
+     * @return Response
      * @throws BadRequestHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     * @throws UnauthorizedHttpException
      */
     public function actionView($id): Response
     {
@@ -73,11 +74,7 @@ class WorkspaceController extends AccessController
             throw new BadRequestHttpException('Invalid uuid');
         }
 
-        $project = Workspace::findById($id);
-
-        if (!$project) {
-            throw new NotFoundHttpException('Workspace not found');
-        }
+        $project = $this->project_service->getOne($id);
 
         $result = [
             'id' => $project->id,
@@ -90,35 +87,36 @@ class WorkspaceController extends AccessController
     }
 
     /**
-     * @throws InvalidConfigException
-     * @throws Exception
+     * @return Response
      * @throws BadRequestHttpException
-     * @throws UnauthorizedHttpException|NotFoundHttpException
+     * @throws Exception
+     * @throws InvalidConfigException
+     * @throws UnauthorizedHttpException
      */
     public function actionCreate(): Response
     {
-        $user_id = $this->getCurrentUserId();
         $request = Yii::$app->request->getBodyParams();
 
         if (!isset($request['title'])) {
             throw new BadRequestHttpException('Missing title');
         }
 
-        $model = $this->project_service->create($request['title'], $user_id);
+        $model = $this->project_service->create($request['title']);
 
         return $this->formatResponse($model, 201);
     }
 
     /**
-     * @throws InvalidConfigException
+     * @param $id
+     * @return Response
      * @throws BadRequestHttpException
-     * @throws NotFoundHttpException
      * @throws ForbiddenHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
      * @throws UnauthorizedHttpException
      */
     public function actionUpdate($id): Response
     {
-        $user_id = $this->getCurrentUserId();
         $request = Yii::$app->request->getBodyParams();
 
         if (!Uuid::isValid($id)) {
@@ -129,40 +127,43 @@ class WorkspaceController extends AccessController
             throw new BadRequestHttpException('Missing title');
         }
 
-        $model = $this->project_service->rename($id, $request['title'], $user_id);
+        $model = $this->project_service->rename($id, $request['title']);
 
         return $this->formatResponse($model);
     }
 
     /**
+     * @param $id
+     * @return Response
+     * @throws BadRequestHttpException
      * @throws Exception
-     * @throws Throwable
-     * @throws StaleObjectException
      * @throws ForbiddenHttpException
      * @throws NotFoundHttpException
+     * @throws StaleObjectException
+     * @throws Throwable
      */
     public function actionDelete($id): Response
     {
-        $user_id = $this->getCurrentUserId();
         if (!Uuid::isValid($id)) {
             throw new BadRequestHttpException('Invalid uuid');
         }
 
-        $this->project_service->delete($id, $user_id);
+        $this->project_service->delete($id);
 
         return $this->formatResponse(null);
     }
 
     /**
-     * @throws InvalidConfigException
-     * @throws ForbiddenHttpException
-     * @throws NotFoundHttpException
+     * @param $id
+     * @return Response
      * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
      * @throws UnauthorizedHttpException
      */
     public function actionInvite($id): Response
     {
-        $user_id = $this->getCurrentUserId();
         $request = Yii::$app->request->getBodyParams();
 
         if (!Uuid::isValid($id)) {
@@ -173,22 +174,24 @@ class WorkspaceController extends AccessController
             throw new BadRequestHttpException('Missing users');
         }
 
-        $this->project_service->invite($id, $user_id, $request['users']);
+        $this->project_service->invite($id, $request['users']);
 
         return $this->formatResponse('The above users have been invited');
     }
 
     /**
+     * @param $id
+     * @return Response
+     * @throws BadRequestHttpException
      * @throws Exception
-     * @throws InvalidConfigException
-     * @throws StaleObjectException
      * @throws ForbiddenHttpException
+     * @throws InvalidConfigException
      * @throws NotFoundHttpException
-     * @throws BadRequestHttpException|UnauthorizedHttpException
+     * @throws StaleObjectException
+     * @throws UnauthorizedHttpException
      */
     public function actionExclude($id): Response
     {
-        $user_id = $this->getCurrentUserId();
         $request = Yii::$app->request->getBodyParams();
 
         if (!Uuid::isValid($id)) {
@@ -199,7 +202,7 @@ class WorkspaceController extends AccessController
             throw new BadRequestHttpException('Missing users');
         }
 
-        $this->project_service->exclude($id, $user_id, $request['users']);
+        $this->project_service->exclude($id, $request['users']);
 
         return $this->formatResponse('The above users have been excluded');
     }
@@ -212,12 +215,11 @@ class WorkspaceController extends AccessController
      */
     public function actionExit($id): Response
     {
-        $user_id = $this->getCurrentUserId();
         if (!Uuid::isValid($id)) {
             throw new BadRequestHttpException('Invalid uuid');
         }
 
-        $this->project_service->exit($id, $user_id);
+        $this->project_service->exit($id);
 
         return $this->formatResponse('The exit was successful');
     }

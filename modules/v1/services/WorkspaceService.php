@@ -6,6 +6,8 @@ use app\common\interfaces\WorkspaceServiceInterface;
 use app\common\models\Workspace;
 use app\common\models\WorkspaceUser;
 use app\common\models\User;
+use kaabar\jwt\Jwt;
+use Lcobucci\JWT\Token;
 use Ramsey\Uuid\Uuid;
 use Throwable;
 use Yii;
@@ -16,21 +18,21 @@ use yii\web\BadRequestHttpException;
 use yii\web\ForbiddenHttpException;
 use yii\web\NotFoundHttpException;
 use yii\web\ServerErrorHttpException;
+use yii\web\UnauthorizedHttpException;
 
 class WorkspaceService implements WorkspaceServiceInterface
 {
-
     /**
      * @throws Exception
      * @throws BadRequestHttpException
      */
-    public function create(string $title, string $current_user_id): Workspace
+    public function create(string $title): Workspace
     {
         $transaction = Yii::$app->db->beginTransaction();
         try {
             $model = new Workspace([
                 'title' => $title,
-                'creator_id' => $current_user_id
+                'creator_id' => Yii::$app->user->getId()
             ]);
 
             if (!$model->save()) {
@@ -41,7 +43,7 @@ class WorkspaceService implements WorkspaceServiceInterface
 
             $relation_model = new WorkspaceUser([
                 'workspace_id' => $model->getId(),
-                'user_id' => $current_user_id
+                'user_id' => Yii::$app->user->getId()
             ]);
 
             if (!$relation_model->save()) {
@@ -57,19 +59,21 @@ class WorkspaceService implements WorkspaceServiceInterface
     }
 
     /**
+     * @param string $id
      * @throws Exception
-     * @throws Throwable
-     * @throws StaleObjectException
      * @throws ForbiddenHttpException
      * @throws NotFoundHttpException
+     * @throws ServerErrorHttpException
+     * @throws StaleObjectException
+     * @throws Throwable
      */
-    public function delete(string $id, string $current_user_id): void
+    public function delete(string $id): void
     {
         $model = Workspace::findById($id);
         if (is_null($model)) {
             throw new NotFoundHttpException('Workspace not found');
         }
-        if ($model->creator_id != $current_user_id) {
+        if ($model->creator_id != Yii::$app->user->getId()) {
             throw new ForbiddenHttpException('You do not have permission to delete this workspace');
         }
 
@@ -91,42 +95,20 @@ class WorkspaceService implements WorkspaceServiceInterface
     }
 
     /**
-     * @throws NotFoundHttpException
-     * @throws ForbiddenHttpException
+     * @param string $id
+     * @param array $user_ids
      * @throws BadRequestHttpException
-     */
-    public function rename(string $workspace_id, string $current_user_id, string $title): Workspace
-    {
-        $model = Workspace::findById($workspace_id);
-        if (is_null($model)) {
-            throw new NotFoundHttpException('Workspace not found');
-        }
-        if ($model->creator_id !== $current_user_id) {
-            throw new ForbiddenHttpException('Forbidden for you');
-        }
-
-        $model->title = $title;
-        if (!$model->save()) {
-            throw new BadRequestHttpException($model->getErrors('title')[0]);
-        }
-
-        return $model;
-    }
-
-
-    /**
-     * @throws NotFoundHttpException
+     * @throws ForbiddenHttpException
      * @throws InvalidConfigException
-     * @throws ForbiddenHttpException
-     * @throws BadRequestHttpException
+     * @throws NotFoundHttpException
      */
-    public function invite(string $workspace_id, string $current_user_id, array $user_ids): void
+    public function invite(string $id, array $user_ids): void
     {
-        $model = Workspace::findById($workspace_id);
+        $model = Workspace::findById($id);
         if (is_null($model)) {
             throw new NotFoundHttpException('Workspace not found');
         }
-        if ($model->creator_id !== $current_user_id) {
+        if ($model->creator_id !== Yii::$app->user->getId()) {
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
@@ -145,25 +127,53 @@ class WorkspaceService implements WorkspaceServiceInterface
     }
 
     /**
-     * @throws Exception
-     * @throws InvalidConfigException
-     * @throws StaleObjectException
-     * @throws NotFoundHttpException
-     * @throws ForbiddenHttpException
+     * @param string $id
+     * @param string $title
+     * @return Workspace
      * @throws BadRequestHttpException
+     * @throws ForbiddenHttpException
+     * @throws NotFoundHttpException
      */
-    public function exclude(string $workspace_id, string $current_user_id, array $user_ids): void
+    public function rename(string $id, string $title): Workspace
     {
-        $model = Workspace::findById($workspace_id);
+        $model = Workspace::findById($id);
+        if (is_null($model)) {
+            throw new NotFoundHttpException('Workspace not found');
+        }
+        if ($model->creator_id !== Yii::$app->user->getId()) {
+            throw new ForbiddenHttpException('Forbidden for you');
+        }
+
+        $model->title = $title;
+        if (!$model->save()) {
+            throw new BadRequestHttpException($model->getErrors('title')[0]);
+        }
+
+        return $model;
+    }
+
+    /**
+     * @param string $id
+     * @param array $user_ids
+     * @throws BadRequestHttpException
+     * @throws Exception
+     * @throws ForbiddenHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     * @throws StaleObjectException
+     */
+    public function exclude(string $id, array $user_ids): void
+    {
+        $model = Workspace::findById($id);
         if (is_null($model)) {
             throw new NotFoundHttpException('Workspace not found');
         }
 
-        if ($model->creator_id !== $current_user_id) {
+        if (Yii::$app->user->getId() !== $model->creator_id) {
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
-        if (in_array($current_user_id, $user_ids)) {
+        if (in_array(Yii::$app->user->getId(), $user_ids)) {
             throw new BadRequestHttpException("You can't exclude yourself");
         }
 
@@ -182,30 +192,59 @@ class WorkspaceService implements WorkspaceServiceInterface
     }
 
     /**
+     * @param string $id
+     * @throws BadRequestHttpException
      * @throws Exception
      * @throws InvalidConfigException
-     * @throws StaleObjectException
      * @throws NotFoundHttpException
-     * @throws BadRequestHttpException
+     * @throws StaleObjectException
      */
-    public function exit(string $workspace_id, string $current_user_id): void
+    public function exit(string $id): void
     {
-        $model = Workspace::findById($workspace_id);
+
+        $model = Workspace::findById($id);
         if (!$model) {
             throw new NotFoundHttpException('Workspace not found');
         }
 
-        $current_user = User::findOne($current_user_id);
+        $current_user = User::findOne(Yii::$app->user->getId());
         if (!$current_user) {
             throw new NotFoundHttpException('User not found');
         }
 
-        if ($current_user_id === $model->creator_id) {
+        if (Yii::$app->user->getId() === $model->creator_id) {
             throw new BadRequestHttpException("You can't exit of your workspace");
         }
 
-        if ($model->isMember($current_user_id)) {
+        if ($model->isMember(Yii::$app->user->getId())) {
             $model->unlink('members', $current_user, true);
         }
+    }
+
+    /**
+     * @param string $id
+     * @return Workspace|null
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     * @throws UnauthorizedHttpException
+     */
+    public function getOne(string $id): ?Workspace
+    {
+        $model = Workspace::findById($id);
+        if (!$model) {
+            throw new NotFoundHttpException('Workspace not found');
+        }
+        if (!$model->isMember(Yii::$app->user->getId())) {
+            throw new UnauthorizedHttpException("You don't have access to this workspace");
+        }
+        return $model;
+    }
+
+    /**
+     * @return array
+     */
+    public function getAll(): array
+    {
+        return Workspace::findByUserId(Yii::$app->user->getId());
     }
 }
