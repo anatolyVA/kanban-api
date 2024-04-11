@@ -24,7 +24,7 @@ class m240319_184251_create_user_token_table extends Migration
             'expiration_date' => $this->dateTime()->notNull()
         ]);
         $this->addPrimaryKey('refresh_token', "{{%user_token}}", 'refresh_token');
-        $this->addForeignKey('user_id', '{{%user_token}}', 'user_id', '{{%user}}', 'id');
+        $this->addForeignKey('user_id', '{{%user_token}}', 'user_id', '{{%user}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

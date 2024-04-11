@@ -37,12 +37,13 @@ class AuthService implements AuthServiceInterface
         if (User::findByEmail($data['email'])) {
             throw new ConflictHttpException('Email is already taken');
         }
+        if (User::findByUsername($data['username'])) {
+            throw new ConflictHttpException('Username is already taken');
+        }
 
-        $model = new User([
-            'email' => $data['email'],
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-        ]);
+
+        $model = new User();
+        $model->setAttributes($data);
         $model->hashPassword($data['password']);
 
         $transaction = Yii::$app->db->beginTransaction();

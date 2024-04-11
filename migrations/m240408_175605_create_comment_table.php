@@ -27,8 +27,8 @@ class m240408_175605_create_comment_table extends Migration
         ]);
 
         $this->addPrimaryKey('comment_id', '{{%comment}}', 'id');
-        $this->addForeignKey('creator_id', '{{%comment}}', 'creator_id', '{{%user}}', 'id');
-        $this->addForeignKey('task_id', '{{%comment}}', 'task_id', '{{%task}}', 'id');
+        $this->addForeignKey('creator_id', '{{%comment}}', 'creator_id', '{{%user}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('task_id', '{{%comment}}', 'task_id', '{{%task}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

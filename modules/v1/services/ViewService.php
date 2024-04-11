@@ -82,16 +82,11 @@ class ViewService implements ViewServiceInterface
         }
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->db->createCommand()
-                ->delete('view_user', ['view_id' => $id])
-                ->execute();
-
             if (!$model->delete()) {
                 foreach ($model->getErrors() as $error) {
                     throw new BadRequestHttpException($error[0]);
                 }
             }
-
             $transaction->commit();
         } catch (ServerErrorHttpException $e) {
             $transaction->rollBack();

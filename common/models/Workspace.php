@@ -15,7 +15,6 @@ use yii\helpers\ArrayHelper;
  */
 class Workspace extends ActiveRecord
 {
-
     public static function tableName(): string
     {
         return "{{%workspace}}";
@@ -45,6 +44,7 @@ class Workspace extends ActiveRecord
                 'title',
                 'creator_id',
                 'members',
+                'invitees',
                 'projects'
             ],
         ]);
@@ -59,6 +59,7 @@ class Workspace extends ActiveRecord
                 'title',
                 'creator_id',
                 'members',
+                'invitees',
                 'projects'
             ],
         ]);
@@ -94,5 +95,23 @@ class Workspace extends ActiveRecord
     public function isMember(string $user_id): bool
     {
         return boolval($this->getMembers()->where(['id' => $user_id])->one());
+    }
+
+    /**
+     * @return ActiveQuery
+     * @throws InvalidConfigException
+     */
+    public function getInvitees(): ActiveQuery
+    {
+        return $this->hasMany(User::class, ['id' => 'user_id'])
+            ->viaTable('workspace_invitation', ['workspace_id' => 'id']);
+    }
+
+    /**
+     * @return ActiveQuery
+     */
+    public function getInvitations(): ActiveQuery
+    {
+        return $this->hasMany(WorkspaceInvitation::class, ['workspace_id' => 'id']);
     }
 }

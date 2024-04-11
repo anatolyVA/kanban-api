@@ -22,12 +22,14 @@ use yii\web\IdentityInterface;
  */
 class User extends ActiveRecord implements IdentityInterface
 {
+
     public function fields(): array
     {
         $fields = parent::fields();
 
         unset(
             $fields['password'],
+            $fields['email'],
         );
 
         return $fields;
@@ -39,9 +41,10 @@ class User extends ActiveRecord implements IdentityInterface
     public function rules(): array
     {
         return [
-            [['first_name', 'password', 'last_name', 'email'], 'required'],
+            [['first_name', 'password', 'last_name', 'email', 'username'], 'required'],
             [['first_name', 'last_name'], 'string', 'min' => 2, 'max' => 52],
             ['email', 'email'],
+            ['username', 'string', 'min' => 2, 'max' => 16],
             ['password', 'string', 'min' => 6, 'max' => 255]
         ];
     }
@@ -55,7 +58,7 @@ class User extends ActiveRecord implements IdentityInterface
     {
         $scenarios = parent::scenarios();
         $scenarios[self::SCENARIO_LOGIN] = ['email', 'password'];
-        $scenarios[self::SCENARIO_REGISTER] = ['first_name', 'last_name', 'email', 'password'];
+        $scenarios[self::SCENARIO_REGISTER] = ['first_name', 'last_name', 'email', 'username', 'password'];
         return $scenarios;
     }
 
@@ -72,7 +75,10 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return static::findOne(['email' => $email]);
     }
-
+    public static function findByUsername($username): ?User
+    {
+        return static::findOne(['username' => $username]);
+    }
 
     /**
      * {@inheritdoc}
@@ -143,5 +149,20 @@ class User extends ActiveRecord implements IdentityInterface
     {
         return $this->hasMany(Workspace::class, ['id' => 'workspace_id'])
             ->viaTable('workspace_user', ['user_id' => 'id']);
+    }
+
+    public function getTasks(): ActiveQuery
+    {
+        return $this->hasMany(Task::class, ['creator_id' => 'id']);
+    }
+
+    /**
+     * @return ActiveQuery
+     * @throws InvalidConfigException
+     */
+    public function getInvitations(): ActiveQuery
+    {
+        return $this->hasMany(Workspace::class, ['id' => 'workspace_id'])
+            ->viaTable('workspace_invitation', ['user_id' => 'id']);
     }
 }

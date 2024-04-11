@@ -12,6 +12,7 @@ use kaabar\jwt\JwtHttpBearerAuth;
 use Lcobucci\JWT\Token;
 use Ramsey\Uuid\Uuid;
 use Yii;
+use yii\base\InvalidConfigException;
 use yii\filters\VerbFilter;
 use yii\web\BadRequestHttpException;
 use yii\web\NotFoundHttpException;
@@ -29,6 +30,8 @@ class UserController extends AccessController
             'actions' => [
                 'index' => ['get', 'options'],
                 'view' => ['get', 'options'],
+                'get-workspaces' => ['get', 'options'],
+                'get-tasks' => ['get', 'options'],
             ],
         ];
         return $behaviors;
@@ -60,6 +63,46 @@ class UserController extends AccessController
         return $this->formatResponse($users);
     }
 
+    /**
+     * @param string $id
+     * @return Response
+     * @throws BadRequestHttpException
+     * @throws InvalidConfigException
+     * @throws NotFoundHttpException
+     */
+    public function actionGetWorkspaces(string $id): Response
+    {
+        if (!Uuid::isValid($id)) {
+            throw new BadRequestHttpException('Invalid uuid');
+        }
+        $user = User::findIdentity($id);
+        if (!$user) {
+            throw new NotFoundHttpException('User not found');
+        }
+        $workspaces = $user->getWorkspaces()->all();
+        return $this->formatResponse($workspaces);
+    }
 
+    /**
+     * @throws NotFoundHttpException
+     * @throws BadRequestHttpException
+     */
+    public function actionGetTasks(string $id): Response
+    {
+        if (!Uuid::isValid($id)) {
+            throw new BadRequestHttpException('Invalid uuid');
+        }
+        $user = User::findIdentity($id);
+        if (!$user) {
+            throw new NotFoundHttpException('User not found');
+        }
+        $tasks = $user->getTasks()->all();
+        return $this->formatResponse($tasks);
+    }
 
+    public function actionProfile(): Response
+    {
+        $user = Yii::$app->user->identity;
+        return $this->formatResponse($user);
+    }
 }

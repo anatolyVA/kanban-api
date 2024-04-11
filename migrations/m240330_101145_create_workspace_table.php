@@ -24,7 +24,7 @@ class m240330_101145_create_workspace_table extends Migration
         ]);
 
         $this->addPrimaryKey('workspace_id', '{{%workspace}}', 'id');
-        $this->addForeignKey('creator_id', '{{%workspace}}', 'creator_id', '{{%user}}', 'id');
+        $this->addForeignKey('creator_id', '{{%workspace}}', 'creator_id', '{{%user}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

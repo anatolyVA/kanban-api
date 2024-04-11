@@ -4,6 +4,7 @@ namespace app\modules\v1\services;
 
 use app\common\interfaces\WorkspaceServiceInterface;
 use app\common\models\Workspace;
+use app\common\models\WorkspaceInvitation;
 use app\common\models\WorkspaceUser;
 use app\common\models\User;
 use kaabar\jwt\Jwt;
@@ -79,10 +80,6 @@ class WorkspaceService implements WorkspaceServiceInterface
 
         $transaction = Yii::$app->db->beginTransaction();
         try {
-            Yii::$app->db->createCommand()
-                ->delete('workspace_user', ['workspace_id' => $id])
-                ->execute();
-
             if (!$model->delete()) {
                 throw new ServerErrorHttpException('Unable to delete Workspace');
             }
@@ -101,6 +98,7 @@ class WorkspaceService implements WorkspaceServiceInterface
      * @throws ForbiddenHttpException
      * @throws InvalidConfigException
      * @throws NotFoundHttpException
+     * @throws \yii\base\Exception
      */
     public function invite(string $id, array $user_ids): void
     {
@@ -121,7 +119,7 @@ class WorkspaceService implements WorkspaceServiceInterface
                 throw new NotFoundHttpException('User not found');
             }
             if (!$model->isMember($uid)) {
-                $model->link('members', $user);
+                $model->link('invitees', $user);
             }
         }
     }

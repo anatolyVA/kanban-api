@@ -30,9 +30,9 @@ class m240408_173741_create_task_table extends Migration
         ]);
 
         $this->addPrimaryKey('task_id', '{{%task}}', 'id');
-        $this->addForeignKey('creator_id', '{{%task}}', 'creator_id', '{{%user}}', 'id');
-        $this->addForeignKey('parent_id', '{{%task}}', 'parent_id', '{{%task}}', 'id');
-        $this->addForeignKey('collection_id', '{{%task}}', 'collection_id', '{{%collection}}', 'id');
+        $this->addForeignKey('creator_id', '{{%task}}', 'creator_id', '{{%user}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('parent_id', '{{%task}}', 'parent_id', '{{%task}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('collection_id', '{{%task}}', 'collection_id', '{{%collection}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

@@ -20,8 +20,8 @@ class m240407_180620_create_view_user_table extends Migration
         ]);
 
         $this->addPrimaryKey('view_id_user_id', '{{%view_user}}', ['view_id', 'user_id']);
-        $this->addForeignKey('view_id', '{{%view_user}}', 'view_id', '{{%view}}', 'id');
-        $this->addForeignKey('user_id', '{{%view_user}}', 'user_id', '{{%user}}', 'id');
+        $this->addForeignKey('view_id', '{{%view_user}}', 'view_id', '{{%view}}', 'id', 'CASCADE', 'CASCADE');
+        $this->addForeignKey('user_id', '{{%view_user}}', 'user_id', '{{%user}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

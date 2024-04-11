@@ -24,7 +24,7 @@ class m240407_162907_create_project_table extends Migration
         ]);
 
         $this->addPrimaryKey('project_id', '{{%project}}', 'id');
-        $this->addForeignKey('workspace_id', '{{%project}}', 'workspace_id', '{{%workspace}}', 'id');
+        $this->addForeignKey('workspace_id', '{{%project}}', 'workspace_id', '{{%workspace}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

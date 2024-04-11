@@ -24,7 +24,7 @@ class m240407_173550_create_view_table extends Migration
         ]);
 
         $this->addPrimaryKey('view_id', '{{%view}}', 'id');
-        $this->addForeignKey('project_id', '{{%view}}', 'project_id', '{{%project}}', 'id');
+        $this->addForeignKey('project_id', '{{%view}}', 'project_id', '{{%project}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**

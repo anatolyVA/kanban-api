@@ -25,7 +25,7 @@ class m240407_181017_create_collection_table extends Migration
         ]);
 
         $this->addPrimaryKey('collection_id', '{{%collection}}', 'id');
-        $this->addForeignKey('view_id', '{{%collection}}', 'view_id', '{{%view}}', 'id');
+        $this->addForeignKey('view_id', '{{%collection}}', 'view_id', '{{%view}}', 'id', 'CASCADE', 'CASCADE');
     }
 
     /**
