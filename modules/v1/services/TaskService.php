@@ -94,17 +94,12 @@ class TaskService implements TaskServiceInterface
             throw new ForbiddenHttpException('Forbidden for you');
         }
 
+        if(isset($data['id']) && !Uuid::isValid($data['id'])) {
+            throw new BadRequestHttpException('Invalid uuid');
+        }
+
         if(isset($data['parent_id'])) {
-            if (!Uuid::isValid($data['parent_id'])) {
-                throw new BadRequestHttpException('Invalid uuid');
-            }
-            if($data['parent_id'] === $data['id']) {
-                throw new BadRequestHttpException('Parent and child task cannot be the same');
-            }
-            $parent = Task::findById($data['parent_id']);
-            if (is_null($parent)) {
-                throw new NotFoundHttpException('Parent task not found');
-            }
+            $this->validateParentId($data['parent_id'], $data['id'] ?? null);
         }
 
         $model = new Task();
@@ -139,6 +134,10 @@ class TaskService implements TaskServiceInterface
 
         if($task->creator_id !== Yii::$app->user->getId()) {
             throw new ForbiddenHttpException('Forbidden for you');
+        }
+
+        if(isset($data['parent_id'])) {
+            $this->validateParentId($data['parent_id'], $id);
         }
 
         if(!is_null($data['collection_id'])) {
@@ -195,60 +194,20 @@ class TaskService implements TaskServiceInterface
     }
 
     /**
-     * @param string $id
-     * @return Task
-     * @throws BadRequestHttpException
-     * @throws ForbiddenHttpException
      * @throws NotFoundHttpException
-     */
-    public function complete(string $id): Task
-    {
-        $task = Task::findById($id);
-        if (is_null($task)) {
-            throw new NotFoundHttpException('Task not found');
-        }
-        if($task->creator_id !== Yii::$app->user->getId()) {
-            throw new ForbiddenHttpException('Forbidden for you');
-        }
-        $task->is_completed = true;
-        $collection = $task->getCollection()->one()->getView()->one()->getCollections()->findOne(['status' => 1]);
-        if(!is_null($collection)) {
-            $task->collection_id = $collection->id;
-        }
-        if(!$task->save()) {
-            foreach ($task->getErrors() as $error) {
-                throw new BadRequestHttpException($error[0]);
-            }
-        }
-        return $task;
-    }
-
-    /**
-     * @param string $id
-     * @return Task
      * @throws BadRequestHttpException
-     * @throws ForbiddenHttpException
-     * @throws NotFoundHttpException
      */
-    public function uncomplete(string $id): Task
+    private function validateParentId($parent_id, $self_id = null): void
     {
-        $task = Task::findById($id);
-        if (is_null($task)) {
-            throw new NotFoundHttpException('Task not found');
+        if (!Uuid::isValid($parent_id)) {
+            throw new BadRequestHttpException('Invalid uuid');
         }
-        if($task->creator_id !== Yii::$app->user->getId()) {
-            throw new ForbiddenHttpException('Forbidden for you');
+        if(isset($self_id) && ($parent_id === $self_id)) {
+            throw new BadRequestHttpException('Parent and child task cannot be the same');
         }
-        $task->is_completed = false;
-        $collection = $task->getCollection()->one()->getView()->one()->getCollections()->findOne(['status' => 0]);
-        if(!is_null($collection)) {
-            $task->collection_id = $collection->id;
+        $parent = Task::findById($parent_id);
+        if (is_null($parent)) {
+            throw new NotFoundHttpException('Parent task not found');
         }
-        if(!$task->save()) {
-            foreach ($task->getErrors() as $error) {
-                throw new BadRequestHttpException($error[0]);
-            }
-        }
-        return $task;
     }
 }
