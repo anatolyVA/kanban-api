@@ -151,7 +151,7 @@ class AuthService implements AuthServiceInterface
         }
 
         Yii::$app->response->cookies->remove('refresh_token');
-        return 'Successfully logout';
+        return 'Successfully logged out';
     }
 
     /**

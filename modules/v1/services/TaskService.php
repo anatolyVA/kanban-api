@@ -28,7 +28,7 @@ class TaskService implements TaskServiceInterface
             throw new NotFoundHttpException('Collection not found');
         }
 
-        return ArrayHelper::toArray($collection->getTasks()->all(), [
+        $tasks = ArrayHelper::toArray($collection->getTasks()->all(), [
             Task::class => [
                 'id',
                 'title',
@@ -38,9 +38,14 @@ class TaskService implements TaskServiceInterface
                 'is_completed',
                 'deadline',
                 'priority',
-                'parent_id'
+                'parent_id',
+                'subtasks',
             ]
         ]);
+
+        return array_values(array_filter($tasks, function ($task) {
+            return $task['parent_id'] === null;
+        }));
     }
 
     /**
@@ -64,7 +69,8 @@ class TaskService implements TaskServiceInterface
                 'is_completed',
                 'deadline',
                 'priority',
-                'parent_id'
+                'parent_id',
+                'subtasks'
             ]
         ]);
     }

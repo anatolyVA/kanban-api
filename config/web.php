@@ -79,9 +79,8 @@ $config = [
                 // users
                 'GET,OPTIONS v1/users' => 'v1/user/index',
                 'GET,OPTIONS v1/users/me' => 'v1/user/profile',
+                'GET,OPTIONS v1/users/me/tasks' => 'v1/user/get-tasks',
                 'GET,OPTIONS v1/users/<id:[\w-]+>' => 'v1/user/view',
-                'GET,OPTIONS v1/users/<id:[\w-]+>/workspaces' => 'v1/user/get-workspaces',
-                'GET,OPTIONS v1/users/<id:[\w-]+>/tasks' => 'v1/user/get-tasks',
                 // workspaces
                 'GET,OPTIONS v1/workspaces' => 'v1/workspace/index',
                 'GET,OPTIONS v1/workspaces/<id:[\w-]+>' => 'v1/workspace/view',

@@ -6,6 +6,7 @@ use app\common\controllers\AccessController;
 use app\common\controllers\BaseController;
 use app\common\models\Project;
 use app\common\models\User;
+use app\modules\v1\services\UserService;
 use app\traits\UuidTypeTrait;
 use kaabar\jwt\Jwt;
 use kaabar\jwt\JwtHttpBearerAuth;
@@ -21,6 +22,7 @@ use yii\web\UnauthorizedHttpException;
 
 class UserController extends AccessController
 {
+    private UserService $service;
     public function behaviors(): array
     {
         $behaviors = parent::behaviors();
@@ -30,79 +32,52 @@ class UserController extends AccessController
             'actions' => [
                 'index' => ['get', 'options'],
                 'view' => ['get', 'options'],
-                'get-workspaces' => ['get', 'options'],
                 'get-tasks' => ['get', 'options'],
             ],
         ];
         return $behaviors;
     }
 
-    /**
-     * @throws NotFoundHttpException
-     * @throws BadRequestHttpException
-     */
-    public function actionView(string $id): Response
+    public function __construct($id, $module, $config = [])
     {
-        if (!Uuid::isValid($id)) {
-            throw new BadRequestHttpException('Invalid uuid');
-        }
-
-        $user = User::findIdentity($id);
-
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
-
-        return $this->formatResponse($user);
-    }
-
-    public function actionIndex(): Response
-    {
-        $users = User::find()->all();
-
-        return $this->formatResponse($users);
+        parent::__construct($id, $module, $config);
+        $this->service = new UserService();
     }
 
     /**
      * @param string $id
      * @return Response
      * @throws BadRequestHttpException
-     * @throws InvalidConfigException
      * @throws NotFoundHttpException
      */
-    public function actionGetWorkspaces(string $id): Response
+    public function actionView(string $id): Response
     {
         if (!Uuid::isValid($id)) {
             throw new BadRequestHttpException('Invalid uuid');
         }
-        $user = User::findIdentity($id);
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
-        $workspaces = $user->getWorkspaces()->all();
-        return $this->formatResponse($workspaces);
+        return $this->formatResponse($this->service->getOne($id));
+    }
+
+    public function actionIndex(): Response
+    {
+        return $this->formatResponse($this->service->getAll());
     }
 
     /**
+     * @return Response
      * @throws NotFoundHttpException
-     * @throws BadRequestHttpException
      */
-    public function actionGetTasks(string $id): Response
-    {
-        if (!Uuid::isValid($id)) {
-            throw new BadRequestHttpException('Invalid uuid');
-        }
-        $user = User::findIdentity($id);
-        if (!$user) {
-            throw new NotFoundHttpException('User not found');
-        }
-        $tasks = $user->getTasks()->all();
-        return $this->formatResponse($tasks);
-    }
-
     public function actionProfile(): Response
     {
-        $user = Yii::$app->user->identity;
-        return $this->formatResponse($user);
+        return $this->formatResponse($this->service->getProfile());
+    }
+
+    /**
+     * @return Response
+     * @throws NotFoundHttpException
+     */
+    public function actionGetTasks(): Response
+    {
+        return $this->formatResponse($this->service->getTasks());
     }
 }
